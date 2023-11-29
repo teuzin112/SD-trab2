@@ -1,7 +1,7 @@
 import tkinter as tk
 import paho.mqtt.client as mqtt
 
-def enviar_aviso():
+def enviar_mensagem():
     topico = topico_entry.get()
     mensagem = mensagem_entry.get()
     
@@ -28,7 +28,7 @@ topico_entry = tk.Entry(root)
 mensagem_label = tk.Label(root, text="Mensagem:")
 mensagem_entry = tk.Entry(root)
 
-enviar_button = tk.Button(root, text="Enviar Aviso", command=enviar_aviso)
+enviar_button = tk.Button(root, text="Enviar mensagem", command=enviar_mensagem)
 
 resultado_label = tk.Label(root, text="")
 

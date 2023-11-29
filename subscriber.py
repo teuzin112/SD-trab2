@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import Toplevel, Text, Scrollbar
 import paho.mqtt.client as mqtt
 from datetime import datetime
 
@@ -17,6 +18,13 @@ class MqttSubscriberApp:
 
         self.create_widgets()
 
+        # Adiciona um botão para abrir a nova janela de feed
+        open_feed_button = tk.Button(self.root, text="Abrir Feed", command=self.open_feed_window)
+        open_feed_button.pack()
+
+        # Estrutura para armazenar mensagens passadas
+        self.past_messages = []
+
     def create_widgets(self):
         # Criação de widgets para o novo tópico
         new_topic_label = tk.Label(self.root, text="Novo Tópico")
@@ -30,11 +38,6 @@ class MqttSubscriberApp:
         self.create_topic_frame("DOLAR", "Cotacao Dolar")
         self.create_topic_frame("EURO", "Cotacao Euro")
         self.create_topic_frame("TEMPFOZ", "Temperatura Foz")
-
-        # Adiciona uma linha em branco entre os tópicos fixos e o novo tópico
-        tk.Frame(self.root, height=10).pack()
-
-
 
     def create_topic_frame(self, topic, topic_text):
         frame = tk.Frame(self.root)
@@ -72,13 +75,43 @@ class MqttSubscriberApp:
         payload = str(message.payload.decode("utf-8"))
         timestamp = datetime.now().strftime("%H:%M:%S")
 
+        # Armazena a mensagem na lista de mensagens passadas
+        self.past_messages.append(f"[{timestamp}] {topic}: {payload}")
+
         # Atualiza o timestamp e a caixa de texto com a última mensagem recebida
         if topic in self.last_messages:
             self.last_messages[topic]["timestamp_label"].config(text=timestamp)
-            self.last_messages[topic]["entry"].configure(state='normal')  # Torna a Entry editável temporariamente
-            self.last_messages[topic]["entry"].delete(0, tk.END)  # Limpa o conteúdo anterior
+            self.last_messages[topic]["entry"].configure(state='normal')
+            self.last_messages[topic]["entry"].delete(0, tk.END)
             self.last_messages[topic]["entry"].insert(tk.END, payload)
-            self.last_messages[topic]["entry"].configure(state='readonly')  # Torna a Entry não editável novamente
+            self.last_messages[topic]["entry"].configure(state='readonly')
+
+        # Adiciona a mensagem à caixa de texto do feed
+        if hasattr(self, 'feed_text'):
+            self.feed_text.configure(state='normal')
+            self.feed_text.insert(tk.END, f"[{timestamp}] {topic}: {payload}\n")
+            self.feed_text.configure(state='disabled')
+    
+    def open_feed_window(self):
+        feed_window = Toplevel(self.root)
+        feed_window.title("Feed de Mensagens")
+
+        # Adiciona uma caixa de texto para mostrar as mensagens
+        self.feed_text = Text(feed_window, wrap="word", state="disabled")
+        self.feed_text.pack(expand=True, fill="both")
+
+        # Adiciona uma barra de rolagem para a caixa de texto
+        scrollbar = Scrollbar(feed_window, command=self.feed_text.yview)
+        scrollbar.pack(side="right", fill="y")
+
+        # Conecta a barra de rolagem à caixa de texto
+        self.feed_text.config(yscrollcommand=scrollbar.set)
+
+        # Exibe as mensagens passadas no feed
+        for past_message in self.past_messages:
+            self.feed_text.configure(state='normal')
+            self.feed_text.insert(tk.END, f"{past_message}\n")
+            self.feed_text.configure(state='disabled')
 
 if __name__ == "__main__":
     root = tk.Tk()
