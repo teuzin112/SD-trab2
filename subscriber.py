@@ -18,13 +18,6 @@ class MqttSubscriberApp:
 
         self.create_widgets()
 
-        # Adiciona um botão para abrir a nova janela de feed
-        open_feed_button = tk.Button(self.root, text="Abrir Feed", command=self.open_feed_window)
-        open_feed_button.pack()
-
-        # Estrutura para armazenar mensagens passadas
-        self.past_messages = []
-
     def create_widgets(self):
         # Criação de widgets para o novo tópico
         new_topic_label = tk.Label(self.root, text="Novo Tópico")
@@ -44,6 +37,8 @@ class MqttSubscriberApp:
         frame.pack()
 
         topic_var = tk.BooleanVar()
+        if(topic not in ['DOLAR', 'EURO', 'TEMPFOZ']):
+            topic_var.set(True)
         tk.Checkbutton(frame, text=topic_text, variable=topic_var, command=lambda: self.subscribe_topic(topic, topic_var), width=15).pack(side=tk.LEFT)
 
         timestamp_label = tk.Label(frame, text="", width=10)
@@ -75,9 +70,6 @@ class MqttSubscriberApp:
         payload = str(message.payload.decode("utf-8"))
         timestamp = datetime.now().strftime("%H:%M:%S")
 
-        # Armazena a mensagem na lista de mensagens passadas
-        self.past_messages.append(f"[{timestamp}] {topic}: {payload}")
-
         # Atualiza o timestamp e a caixa de texto com a última mensagem recebida
         if topic in self.last_messages:
             self.last_messages[topic]["timestamp_label"].config(text=timestamp)
@@ -85,33 +77,6 @@ class MqttSubscriberApp:
             self.last_messages[topic]["entry"].delete(0, tk.END)
             self.last_messages[topic]["entry"].insert(tk.END, payload)
             self.last_messages[topic]["entry"].configure(state='readonly')
-
-        # Adiciona a mensagem à caixa de texto do feed
-        if hasattr(self, 'feed_text'):
-            self.feed_text.configure(state='normal')
-            self.feed_text.insert(tk.END, f"[{timestamp}] {topic}: {payload}\n")
-            self.feed_text.configure(state='disabled')
-    
-    def open_feed_window(self):
-        feed_window = Toplevel(self.root)
-        feed_window.title("Feed de Mensagens")
-
-        # Adiciona uma caixa de texto para mostrar as mensagens
-        self.feed_text = Text(feed_window, wrap="word", state="disabled")
-        self.feed_text.pack(expand=True, fill="both")
-
-        # Adiciona uma barra de rolagem para a caixa de texto
-        scrollbar = Scrollbar(feed_window, command=self.feed_text.yview)
-        scrollbar.pack(side="right", fill="y")
-
-        # Conecta a barra de rolagem à caixa de texto
-        self.feed_text.config(yscrollcommand=scrollbar.set)
-
-        # Exibe as mensagens passadas no feed
-        for past_message in self.past_messages:
-            self.feed_text.configure(state='normal')
-            self.feed_text.insert(tk.END, f"{past_message}\n")
-            self.feed_text.configure(state='disabled')
 
 if __name__ == "__main__":
     root = tk.Tk()
