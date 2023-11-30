@@ -35,17 +35,13 @@ def obter_temp(url, topico_mqtt):
     client.connect(mqttBroker)
 
     while True:
-        # Fazendo a requisição GET
         response = requests.get(url)
 
-        # Verificando se a requisição foi bem-sucedida (código de status 200)
         if response.status_code == 200:
-            # A resposta da API está em formato JSON, você pode acessar os dados assim:
             data = response.json()
 
             valor = data.get('results').get('temp')
 
-            # Agora você pode manipular os dados como desejar
             print("{}: {}".format(topico_mqtt, valor))
 
             client.publish(topico_mqtt, valor)

@@ -15,11 +15,16 @@ class MqttSubscriberApp:
         self.client.loop_start()
 
         self.last_messages = {}
+        self.feed_window = None
 
         self.create_widgets()
 
     def create_widgets(self):
-        # Criação de widgets para o novo tópico
+        # Botão para abrir a nova janela de feed
+        feed_button = tk.Button(self.root, text="Abrir Feed", command=self.open_feed_window)
+        feed_button.pack()
+
+        # Criação de widgets para novo tópico
         new_topic_label = tk.Label(self.root, text="Novo Tópico")
         new_topic_label.pack()
         self.new_topic_entry = tk.Entry(self.root)
@@ -32,13 +37,28 @@ class MqttSubscriberApp:
         self.create_topic_frame("EURO", "Cotacao Euro")
         self.create_topic_frame("TEMPFOZ", "Temperatura Foz")
 
+    def open_feed_window(self):
+        self.feed_window = Toplevel(self.root)
+        self.feed_window.title("Feed")
+        
+        feed_text = Text(self.feed_window, wrap=tk.WORD, width=30, height=10)
+        feed_text.pack(padx=10, pady=10)
+
+        scrollbar = Scrollbar(self.feed_window, command=feed_text.yview)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        feed_text.config(yscrollcommand=scrollbar.set)
+
+        self.feed_text = feed_text
+
     def create_topic_frame(self, topic, topic_text):
         frame = tk.Frame(self.root)
         frame.pack()
 
+        # gambiarrazinha
         topic_var = tk.BooleanVar()
         if(topic not in ['DOLAR', 'EURO', 'TEMPFOZ']):
             topic_var.set(True)
+        
         tk.Checkbutton(frame, text=topic_text, variable=topic_var, command=lambda: self.subscribe_topic(topic, topic_var), width=15).pack(side=tk.LEFT)
 
         timestamp_label = tk.Label(frame, text="", width=10)
@@ -77,6 +97,11 @@ class MqttSubscriberApp:
             self.last_messages[topic]["entry"].delete(0, tk.END)
             self.last_messages[topic]["entry"].insert(tk.END, payload)
             self.last_messages[topic]["entry"].configure(state='readonly')
+
+            # Adiciona a mensagem à caixa de texto do feed
+            if hasattr(self, 'feed_text') and self.feed_text.winfo_exists():
+                self.feed_text.insert(tk.END, f"[{timestamp}] {topic}: {payload}\n")
+                self.feed_text.see(tk.END)
 
 if __name__ == "__main__":
     root = tk.Tk()
